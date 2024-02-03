@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import AudioContext, { autoCorrelate } from "./contexts/AudioContext";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF, Environment, Stars } from "@react-three/drei";
+import { useGLTF, Environment, Stars, useTexture } from "@react-three/drei";
 
-const LOW_FREQUENCY = 100;
-const HIGH_FREQUENCY = 500;
+const LOW_FREQUENCY = 160;
+const HIGH_FREQUENCY = 425;
 const INTERPOLATION_FACTOR = 0.07;
+const NUM_PLANETS = 10;
 
 const audioContext = AudioContext.getAudioContext();
 const analyser = audioContext.createAnalyser();
@@ -17,9 +18,9 @@ function Player() {
   const ref = useRef();
   useFrame(() => {
     if (frequency >= LOW_FREQUENCY && frequency <= HIGH_FREQUENCY) {
-      const target = (-frequency + 200) * 1.5;
+      const target = (-frequency + 260) * 2.4;
       ref.current.position.x = -400;
-      if (volume > 160) {
+      if (volume > 20) {
         ref.current.position.y +=
           (target - ref.current.position.y) * INTERPOLATION_FACTOR;
       }
@@ -35,6 +36,23 @@ function Player() {
   });
 
   return <primitive ref={ref} object={scene} />;
+}
+
+function Planet() {
+  const ref = useRef();
+  useFrame (({ clock }) => {
+    const a = clock.getElapsedTime();
+    ref.current.position.x = -15 * a;
+    ref.current.position.y = 20 + 5 * Math.sin(a);
+    ref.current.position.z = -100;
+  });
+  
+  return (
+    <mesh ref={ref}>
+      <sphereGeometry args = {[15, 15, 15]}/>
+      <meshBasicMaterial color="pink"/>
+    </mesh>
+  );
 }
 
 function App() {
@@ -100,6 +118,8 @@ function App() {
         <Environment preset="warehouse" />
         <Player />
         <Stars />
+        {[...Array(NUM_PLANETS).keys()].map((i) =>
+     <Planet key={i} />)}
       </Canvas>
     </>
   );
