@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import AudioContext, { autoCorrelate } from "./contexts/AudioContext";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF, Environment, Stars, Sparkles } from "@react-three/drei";
+import { useGLTF, Environment, Stars } from "@react-three/drei";
 
 const LOW_FREQUENCY = 100;
 const HIGH_FREQUENCY = 500;
@@ -11,15 +11,18 @@ const audioContext = AudioContext.getAudioContext();
 const analyser = audioContext.createAnalyser();
 
 var frequency = 0;
+var volume = 0;
 
-function Player({}) {
+function Player() {
   const ref = useRef();
   useFrame(() => {
     if (frequency >= LOW_FREQUENCY && frequency <= HIGH_FREQUENCY) {
       const target = (-frequency + 200) * 1.5;
       ref.current.position.x = -400;
-      ref.current.position.y +=
-        (target - ref.current.position.y) * INTERPOLATION_FACTOR;
+      if (volume > 160) {
+        ref.current.position.y +=
+          (target - ref.current.position.y) * INTERPOLATION_FACTOR;
+      }
       ref.current.position.z = -600;
     }
   });
@@ -59,11 +62,9 @@ function App() {
     var array = new Uint8Array(analyser.frequencyBinCount);
     analyser.getByteFrequencyData(array);
     const arraySum = array.reduce((a, b) => a + b, 0);
-    const average = arraySum / array.length;
+    volume = arraySum / array.length;
 
-    if (average > 160) {
-      pollFrequency();
-    }
+    pollFrequency();
   }, 10);
 
   useEffect(() => {
@@ -99,7 +100,6 @@ function App() {
         <Environment preset="warehouse" />
         <Player />
         <Stars />
-        <Sparkles color="yellow" />
       </Canvas>
     </>
   );
