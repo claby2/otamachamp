@@ -10,23 +10,17 @@ const INTERPOLATION_FACTOR = 0.07;
 const audioContext = AudioContext.getAudioContext();
 const analyser = audioContext.createAnalyser();
 
-var array = new Float32Array(2048);
+var frequency = 0;
 
 function Player({}) {
   const ref = useRef();
   useFrame(() => {
-    analyser.getFloatTimeDomainData(array);
-
-    const ac = autoCorrelate(array, audioContext.sampleRate);
-    if (ac > -1) {
-      const frequency = parseFloat(ac);
-      if (frequency >= LOW_FREQUENCY && frequency <= HIGH_FREQUENCY) {
-        const target = (-frequency + 200) * 1.5;
-        ref.current.position.x = -400;
-        ref.current.position.y +=
-          (target - ref.current.position.y) * INTERPOLATION_FACTOR;
-        ref.current.position.z = -600;
-      }
+    if (frequency >= LOW_FREQUENCY && frequency <= HIGH_FREQUENCY) {
+      const target = (-frequency + 200) * 1.5;
+      ref.current.position.x = -400;
+      ref.current.position.y +=
+        (target - ref.current.position.y) * INTERPOLATION_FACTOR;
+      ref.current.position.z = -600;
     }
   });
 
@@ -48,6 +42,29 @@ function App() {
       source.connect(analyser);
     }
   }, [source]);
+
+  setInterval(() => {
+    const pollFrequency = () => {
+      var array = new Float32Array(2048);
+      analyser.getFloatTimeDomainData(array);
+      const ac = autoCorrelate(array, audioContext.sampleRate);
+      if (ac > -1) {
+        let f = parseFloat(ac);
+        if (f >= LOW_FREQUENCY && f <= HIGH_FREQUENCY) {
+          frequency = f;
+        }
+      }
+    };
+
+    var array = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(array);
+    const arraySum = array.reduce((a, b) => a + b, 0);
+    const average = arraySum / array.length;
+
+    if (average > 160) {
+      pollFrequency();
+    }
+  }, 10);
 
   useEffect(() => {
     const start = async () => {
