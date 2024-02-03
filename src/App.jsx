@@ -1,10 +1,21 @@
 import { useEffect, useState } from "react";
 import AudioContext, { autoCorrelate } from "./contexts/AudioContext";
+import { Canvas, useFrame } from "@react-three/fiber";
+import {useGLTF, Environment } from "@react-three/drei";
 
 const audioContext = AudioContext.getAudioContext();
 const analyser = audioContext.createAnalyser();
 
 var array = new Float32Array(2048);
+
+function Player({x}) {
+  return (
+    <mesh position={[x, 0, -150]}>
+      <sphereGeometry args={[5, 64, 64]}/>
+      <meshStandardMaterial color="red" />
+    </mesh>
+  );
+}
 
 function App() {
   const [source, setSource] = useState(null);
@@ -28,16 +39,21 @@ function App() {
   setInterval(pollPitch, 1);
   console.log(frequency);
 
-  const start = async () => {
-    const input = await getMicInput();
+  useEffect(() => {
+    const start = async () => {
+      const input = await getMicInput();
+  
+      if (audioContext.state === "suspended") {
+        audioContext.resume();
+      }
+  
+      const source = audioContext.createMediaStreamSource(input);
+      setSource(source);
+    };
+    start();
+  }, []);
 
-    if (audioContext.state === "suspended") {
-      audioContext.resume();
-    }
-
-    const source = audioContext.createMediaStreamSource(input);
-    setSource(source);
-  };
+  
 
   const getMicInput = () => {
     return navigator.mediaDevices.getUserMedia({
@@ -50,9 +66,16 @@ function App() {
     });
   };
 
+
+
   return (
     <>
-      <button onClick={start}>Start</button>
+      <Canvas shadows camera={{ fov: 60, position: [0, 0, 0]}}>
+        <color attach="background" args={["#000000"]} />
+        <ambientLight intensity={0.1} />
+        <Environment preset="warehouse" />
+        <Player x={frequency / 10}/>
+      </Canvas>
     </>
   );
 }
