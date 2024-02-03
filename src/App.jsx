@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import AudioContext, { autoCorrelate } from "./contexts/AudioContext";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, Environment, Stars, Sparkles } from "@react-three/drei";
 
 const LOW_FREQUENCY = 100;
@@ -12,42 +12,42 @@ const analyser = audioContext.createAnalyser();
 
 var array = new Float32Array(2048);
 
-function Player({ position, setPosition, target }) {
-  const { scene } = useGLTF("/otamatone.glb");
-  scene.traverse((child) => {
-    if (child.isMesh) {
-      child.material.color.set("cyan");
-    }
-  });
-  setPosition(position + (target - position) * INTERPOLATION_FACTOR);
-
-  return <primitive position={[-400, position, -600]} object={scene} />;
-}
-
-function App() {
-  const [source, setSource] = useState(null);
-  const [frequency, setFrequency] = useState(0);
-  const [playerPosition, setPlayerPosition] = useState(0);
-
-  useEffect(() => {
-    if (source) {
-      source.connect(analyser);
-    }
-  }, [source]);
-
-  const pollPitch = () => {
+function Player({}) {
+  const ref = useRef();
+  useFrame(() => {
     analyser.getFloatTimeDomainData(array);
 
     const ac = autoCorrelate(array, audioContext.sampleRate);
     if (ac > -1) {
       const frequency = parseFloat(ac);
       if (frequency >= LOW_FREQUENCY && frequency <= HIGH_FREQUENCY) {
-        setFrequency(frequency);
+        const target = (-frequency + 200) * 1.5;
+        ref.current.position.x = -400;
+        ref.current.position.y +=
+          (target - ref.current.position.y) * INTERPOLATION_FACTOR;
+        ref.current.position.z = -600;
       }
     }
-  };
+  });
 
-  setInterval(pollPitch, 1000);
+  const { scene } = useGLTF("/otamatone.glb");
+  scene.traverse((child) => {
+    if (child.isMesh) {
+      child.material.color.set("cyan");
+    }
+  });
+
+  return <primitive ref={ref} object={scene} />;
+}
+
+function App() {
+  const [source, setSource] = useState(null);
+
+  useEffect(() => {
+    if (source) {
+      source.connect(analyser);
+    }
+  }, [source]);
 
   useEffect(() => {
     const start = async () => {
@@ -80,13 +80,9 @@ function App() {
         <color attach="background" args={["#000000"]} />
         <ambientLight intensity={0.1} />
         <Environment preset="warehouse" />
-        <Player
-          position={playerPosition}
-          setPosition={setPlayerPosition}
-          target={(-frequency + 200) * 1.5}
-        />
+        <Player />
         <Stars />
-        <Sparkles />
+        <Sparkles color="yellow" />
       </Canvas>
     </>
   );
