@@ -16,6 +16,7 @@ const INTERPOLATION_FACTOR = 0.2;
 const NUM_ASTEROIDS = 5;
 const NUM_STARS = 30;
 const timings = [1, 2, 3, 5, 8, 9, 10, 12, 14, 17, 18, 20, 23, 24, 25, 26, 28, 30, 31, 32, 33, 43, 44, 45, 46, 47, 48, 49, 50, 51];
+// const pitches = Array(30).fill(200);
 const pitches = [246.94, 261.63, 261.63, 261.63, 261.63, 246.94, 261.63, 293.66, 261.63, 246.94, 261.63, 261.63, 261.63, 261.63, 246.94, 261.63, 293.66, 261.63, 246.94, 261.63, 220];
 const y_values = pitches.map((x) => (-x + 260) * 2.4);
 
@@ -25,8 +26,21 @@ const analyser = audioContext.createAnalyser();
 var frequency = 0;
 var playerY = 0;
 var score = 0;
+var accuracy = 0;
+var accuracy_arr = [];
+var accuracy_comment = "f";
 
 var volume = 0;
+
+function Bar() {
+  return (
+    <mesh position={[-380, 0, -600]}>
+      <boxGeometry args={[1, 400, 1]}/>
+      <meshBasicMaterial color="white"/>
+    </mesh>
+  );
+  
+}
 
 function Player() {
   const ref = useRef();
@@ -42,9 +56,9 @@ function Player() {
       ref.current.position.z = -600;
       playerY = ref.current.position.y;
 
-      ref.current.rotation.x = Math.sin(a);
-      ref.current.rotation.y = Math.cos(a);
-      ref.current.rotation.z = Math.cos(a);
+      // ref.current.rotation.x = Math.sin(a);
+      // ref.current.rotation.y = Math.cos(a);
+      // ref.current.rotation.z = Math.cos(a);
     }
   });
 
@@ -125,7 +139,7 @@ function Star({ id }) {
   useFrame(({ clock }) => {
     const a = clock.getElapsedTime();
     if (a > timings[id] / 3 && unused == true) {
-      ref.current.position.x -= 20;
+      ref.current.position.x -= 5;
     }
     ref.current.position.y = y_values[id];
     ref.current.position.z = -600;
@@ -134,14 +148,16 @@ function Star({ id }) {
       reset(ref);
     }
 
-    const distance = Math.abs(playerY - ref.current.position.y);
+    const distance = Math.abs(playerY - ref.current.position.y + 26);
 
-    if (
-      ref.current.position.x >= -440 &&
-      ref.current.position.x <= -360 &&
-      distance < 50
-    ) {
-      score++;
+    if (ref.current.position.x <= -360) {
+      if (distance < 50) {
+        score++;
+        accuracy_arr.push((50 - distance) + 50);
+      } else {
+        accuracy_arr.push(0);
+      }
+      accuracy = accuracy_arr.reduce((a, b) => a + b, 0) / accuracy_arr.length;
       reset(ref);
     }
   });
@@ -169,6 +185,65 @@ function ScoreText() {
         color="white"
         fontSize={0.5}
         position={[-5, 5, -15]}
+      ></Text>
+    </instancedMesh>
+  );
+}
+
+function AccuracyText() {
+  const mesh = useRef();
+  const ref = useRef();
+  var txt = "ffffff";
+  var clr = "#ffffff";
+  useFrame(() => {
+    ref.current.text = txt;
+    ref.current.color = clr;
+    mesh.current.instanceMatrix.needsUpdate = true;
+    if (accuracy_arr[accuracy_arr.length - 1] > 90) {
+      txt = "Perfect!" 
+      clr = "#66ffff";
+    } else if (accuracy_arr[accuracy_arr.length - 1] > 80) {
+      txt = "Great!"
+      clr = "#66ff66";
+    } else if (accuracy_arr[accuracy_arr.length - 1] > 65) {
+      txt = "Good"
+      clr = "#ccff66";
+    } else if (accuracy_arr[accuracy_arr.length - 1] > 50) {
+      txt = "Ok"
+      clr = "#ffff66";
+    } else {
+      txt = "Miss"
+      clr = "#cccccc";
+    }
+  });
+
+  return (
+    <instancedMesh ref={mesh}>
+      <Text
+        ref={ref}
+        color={clr}
+        fontSize={0.5}
+        position={[5, -5, -15]}
+      ></Text>
+    </instancedMesh>
+  );
+}
+
+function AccuracyComment() {
+  const mesh = useRef();
+  const ref = useRef();
+  useFrame(() => {
+    ref.current.text = accuracy;
+    mesh.current.instanceMatrix.needsUpdate = true;
+  });
+
+  return (
+    <instancedMesh ref={mesh}>
+      <Text
+        ref={ref}
+        color="white"
+        fontSize={0.5}
+        position={[5, 5, -15]}
       ></Text>
     </instancedMesh>
   );
@@ -246,6 +321,9 @@ function App() {
         ))}
         <Sparkles opacity={0.4} color="cyan" />
         <ScoreText />
+        <AccuracyText />
+        <AccuracyComment />
+        <Bar />
       </Canvas>
     </>
   );
