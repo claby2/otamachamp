@@ -6,12 +6,15 @@ import { useGLTF, Environment, Stars, useTexture } from "@react-three/drei";
 const LOW_FREQUENCY = 160;
 const HIGH_FREQUENCY = 425;
 const INTERPOLATION_FACTOR = 0.07;
-const NUM_PLANETS = 10;
+const NUM_ASTEROIDS = 10;
 
 const audioContext = AudioContext.getAudioContext();
 const analyser = audioContext.createAnalyser();
 
 var frequency = 0;
+var playerY = 0;
+var score = 0;
+
 var volume = 0;
 
 function Player() {
@@ -25,6 +28,7 @@ function Player() {
           (target - ref.current.position.y) * INTERPOLATION_FACTOR;
       }
       ref.current.position.z = -600;
+      playerY = ref.current.position.y;
     }
   });
 
@@ -38,7 +42,7 @@ function Player() {
   return <primitive ref={ref} object={scene} />;
 }
 
-function Planet() {
+function Asteroid() {
   const ref = useRef();
 
   const randomY = () => Math.random() * 200 - 50;
@@ -46,29 +50,44 @@ function Planet() {
   let reserved = true;
   const initialY = randomY();
 
+  const reset = (ref) => {
+    ref.current.position.x = 700;
+    ref.current.position.y = randomY();
+    reserved = true;
+  };
+
   useFrame(({ clock }) => {
     const a = clock.getElapsedTime();
     if (!reserved) {
-      ref.current.position.x -= 1;
+      ref.current.position.x -= 6;
     }
     ref.current.position.y -= Math.sin(a + initialY);
-    ref.current.position.z = -100;
+    ref.current.position.z = -600;
 
     if (Math.random() < 0.01) {
       reserved = false;
     }
 
-    if (ref.current.position.x < -150) {
-      ref.current.position.x = 150;
-      ref.current.position.y = randomY();
-      reserved = true;
+    if (ref.current.position.x < -700) {
+      reset(ref);
+    }
+
+    const distance = Math.abs(playerY - ref.current.position.y);
+
+    if (
+      ref.current.position.x >= -600 &&
+      ref.current.position.x <= -400 &&
+      distance < 50
+    ) {
+      score--;
+      reset(ref);
     }
   });
 
   return (
-    <mesh ref={ref} position={[150, initialY, 0]}>
-      <sphereGeometry args={[15, 15, 15]} />
-      <meshBasicMaterial color="pink" />
+    <mesh ref={ref} position={[700, initialY, 0]}>
+      <sphereGeometry args={[25, 25, 25]} />
+      <meshStandardMaterial map={useTexture("/asteroid.png")} />
     </mesh>
   );
 }
@@ -136,8 +155,8 @@ function App() {
         <Environment preset="warehouse" />
         <Player />
         <Stars />
-        {[...Array(NUM_PLANETS).keys()].map((i) => (
-          <Planet key={i} />
+        {[...Array(NUM_ASTEROIDS).keys()].map((i) => (
+          <Asteroid key={i} />
         ))}
       </Canvas>
     </>
