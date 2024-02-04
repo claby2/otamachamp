@@ -12,9 +12,12 @@ import {
 
 const LOW_FREQUENCY = 160;
 const HIGH_FREQUENCY = 425;
-const INTERPOLATION_FACTOR = 0.07;
+const INTERPOLATION_FACTOR = 0.2;
 const NUM_ASTEROIDS = 5;
-const NUM_STARS = 10;
+const NUM_STARS = 30;
+const timings = [1, 2, 3, 5, 8, 9, 10, 12, 14, 17, 18, 20, 23, 24, 25, 26, 28, 30, 31, 32, 33, 43, 44, 45, 46, 47, 48, 49, 50, 51];
+const pitches = [246.94, 261.63, 261.63, 261.63, 261.63, 246.94, 261.63, 293.66, 261.63, 246.94, 261.63, 261.63, 261.63, 261.63, 246.94, 261.63, 293.66, 261.63, 246.94, 261.63, 220];
+const y_values = pitches.map((x) => (-x + 260) * 2.4);
 
 const audioContext = AudioContext.getAudioContext();
 const analyser = audioContext.createAnalyser();
@@ -105,31 +108,27 @@ function Asteroid() {
   );
 }
 
-function Star() {
+function Star({ id }) {
   const ref = useRef();
 
   const randomY = () => Math.random() * 200 - 50;
 
-  let reserved = true;
+  let unused = true;
   const initialY = randomY();
 
   const reset = (ref) => {
     ref.current.position.x = 700;
     ref.current.position.y = randomY();
-    reserved = true;
+    unused = false;
   };
 
   useFrame(({ clock }) => {
     const a = clock.getElapsedTime();
-    if (!reserved) {
-      ref.current.position.x -= 6;
+    if (a > timings[id] / 3 && unused == true) {
+      ref.current.position.x -= 20;
     }
-    ref.current.position.y -= Math.sin(a + initialY);
+    ref.current.position.y = y_values[id];
     ref.current.position.z = -600;
-
-    if (Math.random() < 0.01) {
-      reserved = false;
-    }
 
     if (ref.current.position.x < -700) {
       reset(ref);
@@ -193,6 +192,7 @@ function App() {
         let f = parseFloat(ac);
         if (f >= LOW_FREQUENCY && f <= HIGH_FREQUENCY) {
           frequency = f;
+          console.log(frequency);
         }
       }
     };
@@ -238,11 +238,11 @@ function App() {
         <Environment preset="warehouse" />
         <Player />
         <Stars />
-        {[...Array(NUM_ASTEROIDS).keys()].map((i) => (
+        {/* {[...Array(NUM_ASTEROIDS).keys()].map((i) => (
           <Asteroid key={i} />
-        ))}
+        ))} */}
         {[...Array(NUM_STARS).keys()].map((i) => (
-          <Star key={i} />
+          <Star key={i} id={i}/>
         ))}
         <Sparkles opacity={0.4} color="cyan" />
         <ScoreText />
