@@ -1,7 +1,13 @@
 import { useEffect, useState, useRef } from "react";
 import AudioContext, { autoCorrelate } from "./contexts/AudioContext";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF, Environment, Stars, useTexture } from "@react-three/drei";
+import {
+  useGLTF,
+  Environment,
+  Stars,
+  useTexture,
+  Text,
+} from "@react-three/drei";
 
 const LOW_FREQUENCY = 160;
 const HIGH_FREQUENCY = 425;
@@ -92,6 +98,26 @@ function Asteroid() {
   );
 }
 
+function ScoreText() {
+  const mesh = useRef();
+  const ref = useRef();
+  useFrame(() => {
+    ref.current.text = `Score: ${score}`;
+    mesh.current.instanceMatrix.needsUpdate = true;
+  });
+
+  return (
+    <instancedMesh ref={mesh}>
+      <Text
+        ref={ref}
+        color="white"
+        fontSize={0.5}
+        position={[-5, 5, -15]}
+      ></Text>
+    </instancedMesh>
+  );
+}
+
 function App() {
   const [source, setSource] = useState(null);
 
@@ -158,6 +184,7 @@ function App() {
         {[...Array(NUM_ASTEROIDS).keys()].map((i) => (
           <Asteroid key={i} />
         ))}
+        <ScoreText />
       </Canvas>
     </>
   );
