@@ -40,17 +40,35 @@ function Player() {
 
 function Planet() {
   const ref = useRef();
-  useFrame (({ clock }) => {
+
+  const randomY = () => Math.random() * 200 - 50;
+
+  let reserved = true;
+  const initialY = randomY();
+
+  useFrame(({ clock }) => {
     const a = clock.getElapsedTime();
-    ref.current.position.x = -15 * a;
-    ref.current.position.y = 20 + 5 * Math.sin(a);
+    if (!reserved) {
+      ref.current.position.x -= 1;
+    }
+    ref.current.position.y -= Math.sin(a + initialY);
     ref.current.position.z = -100;
+
+    if (Math.random() < 0.01) {
+      reserved = false;
+    }
+
+    if (ref.current.position.x < -150) {
+      ref.current.position.x = 150;
+      ref.current.position.y = randomY();
+      reserved = true;
+    }
   });
-  
+
   return (
-    <mesh ref={ref}>
-      <sphereGeometry args = {[15, 15, 15]}/>
-      <meshBasicMaterial color="pink"/>
+    <mesh ref={ref} position={[150, initialY, 0]}>
+      <sphereGeometry args={[15, 15, 15]} />
+      <meshBasicMaterial color="pink" />
     </mesh>
   );
 }
@@ -118,8 +136,9 @@ function App() {
         <Environment preset="warehouse" />
         <Player />
         <Stars />
-        {[...Array(NUM_PLANETS).keys()].map((i) =>
-     <Planet key={i} />)}
+        {[...Array(NUM_PLANETS).keys()].map((i) => (
+          <Planet key={i} />
+        ))}
       </Canvas>
     </>
   );
