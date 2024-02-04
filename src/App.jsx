@@ -12,7 +12,8 @@ import {
 const LOW_FREQUENCY = 160;
 const HIGH_FREQUENCY = 425;
 const INTERPOLATION_FACTOR = 0.07;
-const NUM_ASTEROIDS = 10;
+const NUM_ASTEROIDS = 5;
+const NUM_STARS = 10;
 
 const audioContext = AudioContext.getAudioContext();
 const analyser = audioContext.createAnalyser();
@@ -70,7 +71,7 @@ function Asteroid() {
     ref.current.position.y -= Math.sin(a + initialY);
     ref.current.position.z = -600;
 
-    if (Math.random() < 0.01) {
+    if (Math.random() < 0.005) {
       reserved = false;
     }
 
@@ -94,6 +95,56 @@ function Asteroid() {
     <mesh ref={ref} position={[700, initialY, 0]}>
       <sphereGeometry args={[25, 25, 25]} />
       <meshStandardMaterial map={useTexture("/asteroid.png")} />
+    </mesh>
+  );
+}
+
+function Star() {
+  const ref = useRef();
+
+  const randomY = () => Math.random() * 200 - 50;
+
+  let reserved = true;
+  const initialY = randomY();
+
+  const reset = (ref) => {
+    ref.current.position.x = 700;
+    ref.current.position.y = randomY();
+    reserved = true;
+  };
+
+  useFrame(({ clock }) => {
+    const a = clock.getElapsedTime();
+    if (!reserved) {
+      ref.current.position.x -= 6;
+    }
+    ref.current.position.y -= Math.sin(a + initialY);
+    ref.current.position.z = -600;
+
+    if (Math.random() < 0.01) {
+      reserved = false;
+    }
+
+    if (ref.current.position.x < -700) {
+      reset(ref);
+    }
+
+    const distance = Math.abs(playerY - ref.current.position.y);
+
+    if (
+      ref.current.position.x >= -600 &&
+      ref.current.position.x <= -400 &&
+      distance < 50
+    ) {
+      score++;
+      reset(ref);
+    }
+  });
+
+  return (
+    <mesh ref={ref} position={[700, initialY, 0]}>
+      <sphereGeometry args={[25, 25, 25]} />
+      <meshStandardMaterial map={useTexture("/star.jpeg")} />
     </mesh>
   );
 }
@@ -183,6 +234,9 @@ function App() {
         <Stars />
         {[...Array(NUM_ASTEROIDS).keys()].map((i) => (
           <Asteroid key={i} />
+        ))}
+        {[...Array(NUM_STARS).keys()].map((i) => (
+          <Star key={i} />
         ))}
         <ScoreText />
       </Canvas>
