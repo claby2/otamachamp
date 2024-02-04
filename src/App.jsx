@@ -27,7 +27,8 @@ var volume = 0;
 
 function Player() {
   const ref = useRef();
-  useFrame(() => {
+  useFrame(({ clock }) => {
+    const a = clock.getElapsedTime();
     if (frequency >= LOW_FREQUENCY && frequency <= HIGH_FREQUENCY) {
       const target = (-frequency + 260) * 2.4;
       ref.current.position.x = -400;
@@ -37,6 +38,10 @@ function Player() {
       }
       ref.current.position.z = -600;
       playerY = ref.current.position.y;
+
+      ref.current.rotation.x = Math.sin(a);
+      ref.current.rotation.y = Math.cos(a);
+      ref.current.rotation.z = Math.cos(a);
     }
   });
 
@@ -83,8 +88,8 @@ function Asteroid() {
     const distance = Math.abs(playerY - ref.current.position.y);
 
     if (
-      ref.current.position.x >= -600 &&
-      ref.current.position.x <= -400 &&
+      ref.current.position.x >= -450 &&
+      ref.current.position.x <= -350 &&
       distance < 50
     ) {
       score--;
@@ -133,8 +138,8 @@ function Star() {
     const distance = Math.abs(playerY - ref.current.position.y);
 
     if (
-      ref.current.position.x >= -600 &&
-      ref.current.position.x <= -400 &&
+      ref.current.position.x >= -440 &&
+      ref.current.position.x <= -360 &&
       distance < 50
     ) {
       score++;
