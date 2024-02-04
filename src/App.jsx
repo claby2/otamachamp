@@ -7,6 +7,7 @@ import {
   Stars,
   useTexture,
   Text,
+  Sparkles,
 } from "@react-three/drei";
 
 const LOW_FREQUENCY = 160;
@@ -238,6 +239,7 @@ function App() {
         {[...Array(NUM_STARS).keys()].map((i) => (
           <Star key={i} />
         ))}
+        <Sparkles opacity={0.4} color="cyan" />
         <ScoreText />
       </Canvas>
     </>
