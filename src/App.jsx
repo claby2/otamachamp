@@ -10,8 +10,8 @@ import {
   Sparkles,
 } from "@react-three/drei";
 
-const LOW_FREQUENCY = 160;
-const HIGH_FREQUENCY = 425;
+const LOW_FREQUENCY = 80;
+const HIGH_FREQUENCY = 850;
 const INTERPOLATION_FACTOR = 0.07;
 const NUM_ASTEROIDS = 5;
 const NUM_STARS = 10;
@@ -30,7 +30,7 @@ function Player() {
   useFrame(({ clock }) => {
     const a = clock.getElapsedTime();
     if (frequency >= LOW_FREQUENCY && frequency <= HIGH_FREQUENCY) {
-      const target = (-frequency + 260) * 2.4;
+      const target = (-frequency + 400) * 1.2;
       ref.current.position.x = -400;
       if (volume > 20) {
         ref.current.position.y +=
